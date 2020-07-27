@@ -1,0 +1,7 @@
+xclock*background: black
+xclock*foreground: white
+
+xterm*background: black
+xterm*foreground: lightgray
+xterm*faceName: Deja Vu Sans Mono
+xterm*faceSize: 10
