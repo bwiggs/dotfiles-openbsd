@@ -1,2 +1,5 @@
 borderwidth 1
-gap 0 0 14 0
+gap 0 40 0 0
+bind-key 4-0xff61 "scrot -e 'mv $f ~/shots/'"
+bind-key CS-Return "xterm -e htop"
+bind-key CM-Return "xterm -e tmux -u"

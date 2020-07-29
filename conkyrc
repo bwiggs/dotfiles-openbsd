@@ -1,0 +1,78 @@
+default_color bbbbbb
+short_units
+#show_graph_scale
+override_utf8_locale yes
+update_interval 1
+minimum_size 1355
+default_bar_size 120 15
+default_graph_size 120 15
+alignment bottom_left
+double_buffer yes
+
+gap_y 0 
+
+TEXT
+#
+# LINE 1 - HEADERS
+#
+CPU ${freq}Mhz ${exec sysctl -n hw.perfpolicy} ${cpu}%\
+${goto 135}MEM ${memperc}%      ${mem}\
+${goto 265}\
+#${if_up iwn0}${addr iwn0}${endif}
+#${if_up iwn0}${addr iwn0}${endif}
+${goto 395}\
+# BATTERY
+# when battery is critical turn the whole thing red
+${if_match "${execi 5 apm -l}" <= "15"}${color red}${endif}\
+${if_match "${execi 5 apm -l}" <= "33"}${color yellow}${endif}\
+# when plugged in override to default color
+${if_match "${execi 5 apm -a}" == "1"}${color}${endif}\
+BAT \
+# if we're low, turn it yellow, red if critical
+${if_match "${execi 5 apm -a}" == "1"}${color green}${endif}\
+${if_match "${execi 5 apm -a}" == "0"}${color yellow}${endif}\
+${if_match "${execi 5 apm -l}" <= "15"}${color red}${endif}\
+${if_match "${execi 5 apm -l}" == "100"}${color green}${endif}\
+${exec apm -l}% \
+# when discharging, show time remaining
+${if_match "${execi 5 apm -a}" == "0"}${apm_battery_time}${endif}${color}\
+${goto 265}\
+LOAD ${loadavg}\
+${goto 525}\
+WIFI WiggsUnifi ${execi 8 ifconfig iwn0 | egrep -o '\-?[0-9]+dBm' | cut -b -3}d\
+${goto 655}\
+NET DOWN ${downspeedf iwn0}\
+${goto 785}\
+NET UP ${upspeedf iwn0}\
+${goto 915}\
+DISK
+#
+# LINE 2 - GRAPHS
+#
+${cpugraph 15,120 ffffff ff0000 -t}\
+${goto 135}${memgraph}\
+${goto 265}\
+${loadgraph 15,120 ffffff ff0000 -t}\
+${goto 395}\
+# BATTERY
+# turn red when critical
+${if_match "${execi 5 apm -l}" <= "33"}${color yellow}${endif}\
+${if_match "${execi 5 apm -l}" <= "15"}${color red}${endif}\
+# blink every second when below 10%
+${if_match "${execi 5 apm -l}" <= "10"}${if_match "${exec expr `date +%s` % 2}" == "0"}${color black}${endif}${endif}\
+# cancel colors if we're charging
+${if_match "${execi 5 apm -a}" == "1"}${color}${endif}\
+${execibar 5 apm -l}\
+${color}\
+${goto 525}\
+#Converts dBm to a 0-100 percentage which can the be graphed
+# https://stackoverflow.com/questions/15797920/how-to-convert-wifi-signal-strength-from-quality-percent-to-rssi-dbm
+# https://unix.stackexchange.com/a/186702
+${execibar 5 ifconfig iwn0 | egrep -o '\-?[0-9]+dBm' | cut -b -3 | xargs -I % bc -e "2 * (% + 100)" | xargs -I % dc -e "[100]sM %d 100<Mp"}\
+${goto 655}\
+${downspeedgraph iwn0 15,120}\
+${goto 785}\
+${upspeedgraph iwn0 15,120}\
+${goto 915}\
+${fs_bar}\
+${alignr}${time}
