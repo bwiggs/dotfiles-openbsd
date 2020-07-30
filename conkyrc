@@ -8,20 +8,22 @@ default_bar_size 120 15
 default_graph_size 120 15
 alignment bottom_left
 double_buffer yes
-
 gap_y 0 
+use_xft yes
+xftfont dejavu sans mono:size=8
 
 TEXT
 #
 # LINE 1 - HEADERS
 #
+# CPU -------------------
 CPU ${freq}Mhz ${exec sysctl -n hw.perfpolicy} ${cpu}%\
 ${goto 135}MEM ${memperc}%      ${mem}\
 ${goto 265}\
 #${if_up iwn0}${addr iwn0}${endif}
 #${if_up iwn0}${addr iwn0}${endif}
 ${goto 395}\
-# BATTERY
+# BATTERY ----------------
 # when battery is critical turn the whole thing red
 ${if_match "${execi 5 apm -l}" <= "15"}${color red}${endif}\
 ${if_match "${execi 5 apm -l}" <= "33"}${color yellow}${endif}\
@@ -29,7 +31,7 @@ ${if_match "${execi 5 apm -l}" <= "33"}${color yellow}${endif}\
 ${if_match "${execi 5 apm -a}" == "1"}${color}${endif}\
 BAT \
 # if we're low, turn it yellow, red if critical
-${if_match "${execi 5 apm -a}" == "1"}${color green}${endif}\
+${if_match "${execi 5 apm -a}" == "1"}${color green}⚡ ${endif}\
 ${if_match "${execi 5 apm -a}" == "0"}${color yellow}${endif}\
 ${if_match "${execi 5 apm -l}" <= "15"}${color red}${endif}\
 ${if_match "${execi 5 apm -l}" == "100"}${color green}${endif}\
@@ -37,15 +39,22 @@ ${exec apm -l}% \
 # when discharging, show time remaining
 ${if_match "${execi 5 apm -a}" == "0"}${apm_battery_time}${endif}${color}\
 ${goto 265}\
+# LOAD ------------------------
 LOAD ${loadavg}\
 ${goto 525}\
-WIFI WiggsUnifi ${execi 8 ifconfig iwn0 | egrep -o '\-?[0-9]+dBm' | cut -b -3}d\
+WIFI \
+# ESSID
+${execi 5 ifconfig iwn0 | egrep -o "join [a-zA-Z0-9]+" | cut -b 6-} \
+# RSSI
+${execi 8 ifconfig iwn0 | egrep -o '\-?[0-9]+dBm' | cut -b -3}d\
 ${goto 655}\
 NET DOWN ${downspeedf iwn0}\
 ${goto 785}\
 NET UP ${upspeedf iwn0}\
 ${goto 915}\
-DISK
+DISK\
+${goto 1045}\
+VOL
 #
 # LINE 2 - GRAPHS
 #
@@ -58,6 +67,7 @@ ${goto 395}\
 # turn red when critical
 ${if_match "${execi 5 apm -l}" <= "33"}${color yellow}${endif}\
 ${if_match "${execi 5 apm -l}" <= "15"}${color red}${endif}\
+${if_match "${execi 5 apm -l}" == "100"}${color}${endif}\
 # blink every second when below 10%
 ${if_match "${execi 5 apm -l}" <= "10"}${if_match "${exec expr `date +%s` % 2}" == "0"}${color black}${endif}${endif}\
 # cancel colors if we're charging
@@ -75,4 +85,6 @@ ${goto 785}\
 ${upspeedgraph iwn0 15,120}\
 ${goto 915}\
 ${fs_bar}\
-${alignr}${time}
+${goto 1045}\
+${mixerbar vol}\
+${alignr}${time}${mixer vol}
